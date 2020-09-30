@@ -5,14 +5,19 @@ from typing import Optional
 import cv2
 import numpy as np
 
+# how many colors are being considered; if 32 it means only 0, 32, 64, ... , 255 are valid RGB values
 COLOR_STEP = 32
 
+# name of the output image
 OUTPUT = "output.png"
 
 
 class Triangler:
     def __init__(self, ref_image: str, start_image: Optional[str] = None):
         self.ref_image = cv2.imread(ref_image)
+
+        if self.ref_image is None:
+            raise ValueError(f"Couldn't find input file {ref_image}.")
 
         if start_image is None:
             self.fit_image = np.zeros(self.ref_image.shape, dtype=np.uint8)
@@ -42,7 +47,7 @@ class Triangler:
 
     def set_triangles_per_side(self, value):
         self.triangle_length = int((self.height + self.width) / 2 / value)
-        print(self.triangle_length)
+        print(f"Using {self.triangle_length}px triangles.")
 
     def iterate(self, iterations):
         start = time()
@@ -129,11 +134,16 @@ class Triangler:
 
 
 if __name__ == '__main__':
+    # input file
     triangler = Triangler("fit5.jpg")
 
-    for i in range(3, 4):
+    # range of the triangles being drawn; if range(2, 4): triangles of size 2 and 3, higher = smaller triangles
+    # first larger triangles are drawn, then smaller on top of that
+    for i in range(1, 3):
+        # set amount of triangles per side (average of width and height)
         triangler.set_triangles_per_side(10 * 2 ** i)
 
+        # amount of time triangles are tried to be added
         triangler.iterate(1_000 * 10 ** i)
 
         triangler.save(OUTPUT)
